@@ -12,6 +12,7 @@ class PolitoWeb:
     login_cookie = None
     mat_cookie = None
     lista_mat = None
+    lista_mat_altri_anni = None
     last_update_remote = None
     last_update_local = None
     MAX_RETRY = 3  # Numero massimo per i tentativi di login
@@ -154,7 +155,7 @@ class PolitoWeb:
 
         with requests.session() as s:
             s.cookies = self.login_cookie
-            s.get(
+            hp = s.get(
                 "https://didattica.polito.it/pls/portal30/sviluppo.chiama_materia",
                 params={
                     "cod_ins": self.lista_mat[indice][0],
@@ -162,7 +163,44 @@ class PolitoWeb:
                 },
                 headers=self.headers,
             )
+
             self.mat_cookie = s.cookies
+
+            self.lista_mat_altri_anni = re.findall(
+                "cod_ins=(.+)&from_inc=([0-9]+)&to_inc=([0-9]+)&a_acc=([0-9]+).+>(.+)[ ]*<", hp.text
+            )
+
+            if len(self.lista_mat_altri_anni) > 1:
+                i = 1
+                print("\n\tElenco altri anni accademici - (CTRL+D per terminare)")
+                for mat in self.lista_mat_altri_anni:
+                    print("[%.2d] %s" % (i, mat[4]))
+                    i += 1
+                indice_anno = -1
+                while indice_anno not in range(1, i):
+                    try:
+                        indice_anno = input("\tMateria: ")
+                    except EOFError:
+                        print()
+                        return False  # Exit from while cycle of self.main()
+                    if indice_anno.isnumeric():
+                        indice_anno = int(indice_anno)
+                    else:
+                        continue
+                indice_anno = indice_anno -1
+                with requests.session() as s:
+                    s.cookies = self.login_cookie
+                    s.get("https://didattica.polito.it/pls/portal30/sviluppo.portlet_corsi.altri_anni",
+                        params={
+                            "cod_ins": self.lista_mat_altri_anni[indice_anno][0],
+                            "from_inc": self.lista_mat_altri_anni[indice_anno][1],
+                            "to_inc": self.lista_mat_altri_anni[indice_anno][2],
+                            "a_acc": self.lista_mat_altri_anni[indice_anno][3],
+                        },
+                        headers=self.headers
+                    )
+                    self.mat_cookie = s.cookies
+
             self._get_path_content(cartella_da_creare, "/")
 
     def _get_path_content(self, cartella, path, code="0"):
