@@ -138,7 +138,8 @@ class PolitoWeb:
                 headers=self.headers,
             )
             self.lista_mat = re.findall(
-                "cod_ins=(.+)&incarico=([0-9]+).+>(.+)[ ]*<", hp.text
+                                      #([0-9]+)
+                "cod_ins=(.+)&incarico=.+>(.+)[ ]*<", hp.text
             )
 
     def _select_mat(self, indice):
@@ -149,7 +150,7 @@ class PolitoWeb:
         :param indice: indice della materia nella lista (self.lista_mat)
         """
 
-        nome_mat = self._purge_string(self.lista_mat[indice][2])
+        nome_mat = self._purge_string(self.lista_mat[indice][1])
         cartella_da_creare = os.path.join(self.dl_folder, nome_mat)
         self._mkdir_if_not_exists(cartella_da_creare)
 
@@ -159,7 +160,7 @@ class PolitoWeb:
                 "https://didattica.polito.it/pls/portal30/sviluppo.chiama_materia",
                 params={
                     "cod_ins": self.lista_mat[indice][0],
-                    "incarico": self.lista_mat[indice][1],
+                    "incarico": "",#self.lista_mat[indice][1],
                 },
                 headers=self.headers,
             )
@@ -167,7 +168,8 @@ class PolitoWeb:
             self.mat_cookie = s.cookies
 
             self.lista_mat_altri_anni = re.findall(
-                "cod_ins=(.+)&from_inc=([0-9]+)&to_inc=([0-9]+)&a_acc=([0-9]+).+>(.+)[ ]*<", hp.text
+                #([0-9]+)
+                "cod_ins=(.+)&from_inc=(.+)to_inc=([0-9]+)&a_acc=([0-9]+).+>(.+)[ ]*<", hp.text
             )
 
             if len(self.lista_mat_altri_anni) > 1:
@@ -193,7 +195,7 @@ class PolitoWeb:
                     s.get("https://didattica.polito.it/pls/portal30/sviluppo.portlet_corsi.altri_anni",
                         params={
                             "cod_ins": self.lista_mat_altri_anni[indice_anno][0],
-                            "from_inc": self.lista_mat_altri_anni[indice_anno][1],
+                            #"from_inc": self.lista_mat_altri_anni[indice_anno][1],
                             "to_inc": self.lista_mat_altri_anni[indice_anno][2],
                             "a_acc": self.lista_mat_altri_anni[indice_anno][3],
                         },
@@ -325,7 +327,7 @@ class PolitoWeb:
         i = 1
         print("\nElenco del materiale disponibile - (CTRL+D per terminare)")
         for mat in self.lista_mat:
-            print("[%.2d] %s" % (i, mat[2]))
+            print("[%.2d] %s" % (i, mat[1]))
             i += 1
         print("(Il download verrà effettuato nella cartella: " + self.dl_folder + ")")
         x = -1
